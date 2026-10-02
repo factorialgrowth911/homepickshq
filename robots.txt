@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://homepickshq.com/sitemap.xml
