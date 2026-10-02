@@ -1,5 +1,5 @@
-:root{--bg:#fff;--fg:#1d2433;--mut:#5b6475;--acc:#c2410c;--onacc:#fff;--onacc:#fff;--card:#f6f4f1;--bd:#e5e0d8}
-@media(prefers-color-scheme:dark){:root{--bg:#14171f;--fg:#eceff4;--mut:#a3adbf;--acc:#fb923c;--onacc:#14171f;--onacc:#14171f;--card:#1d222d;--bd:#2c3341}}
+:root{--bg:#fff;--fg:#1d2433;--mut:#5b6475;--acc:#c2410c;--onacc:#fff;--onacc:#fff;--onacc:#fff;--card:#f6f4f1;--bd:#e5e0d8}
+@media(prefers-color-scheme:dark){:root{--bg:#14171f;--fg:#eceff4;--mut:#a3adbf;--acc:#fb923c;--onacc:#14171f;--onacc:#14171f;--onacc:#14171f;--card:#1d222d;--bd:#2c3341}}
 *{box-sizing:border-box}body{margin:0;font:17px/1.65 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
 .wrap{max-width:980px;margin:0 auto;padding:0 16px}header{border-bottom:1px solid var(--bd)}header .wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding:14px 16px}
 .logo{font-weight:800;font-size:1.3rem;color:var(--acc);text-decoration:none}nav a{margin-right:14px;color:var(--fg);text-decoration:none}nav a:hover{color:var(--acc)}
@@ -12,3 +12,4 @@
 .linkpage{max-width:520px;margin:0 auto;text-align:center}.lbtn{display:block;margin:10px 0;padding:14px 16px;border:2px solid var(--acc);border-radius:10px;text-decoration:none;font-weight:600;color:var(--acc)}.lbtn.main{background:var(--acc);color:var(--onacc)}.crumb,.meta{color:var(--mut);font-size:.9rem}.note{background:var(--card);border-left:4px solid var(--acc);padding:10px 14px;font-size:.92rem}.btn.alt{background:transparent;color:var(--acc);border:2px solid var(--acc)}.card h3 a{text-decoration:none}article{max-width:760px}h2{margin-top:2rem}li{margin:.3rem 0}
 .logo{display:inline-flex;align-items:center;gap:10px;color:var(--fg);letter-spacing:-.02em}.logo b{color:var(--acc);font-weight:800}.logo .mark{flex:none;display:block}
 figure{margin:1.5rem 0}figure img{display:block;width:100%;height:auto;border-radius:10px}figcaption{font-size:.8rem;color:var(--mut);margin-top:6px}.chk{max-width:420px}.card .thumb{display:block;width:calc(100% + 36px);height:auto;margin:-18px -18px 14px;border-radius:10px 10px 0 0}
+.shop{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:1.5rem 0}.shop span{font-size:.85rem;color:var(--mut);flex:1 1 240px}
