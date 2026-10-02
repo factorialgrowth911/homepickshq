@@ -1,2 +1,7 @@
 hero/
 thumb/
+session.json
+posted_history.json
+img_cache/
+.env
+__pycache__/

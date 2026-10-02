@@ -32,7 +32,7 @@ Looking for full dimensions, weight limits, and real parent feedback?
 ---
 
 ## 2. Is Amazon Prime Worth It for Home Shoppers?
-* **Images**: `img/amazon-prime-for-home-shoppers.jpg` / Prime graphics
+* **Images**: `img/amazon-prime-for-home-shoppers-hero.jpg` + `checklist.jpg`
 * **Hook Line (Image Overlay)**: *Is Amazon Prime actually worth $139 a year? Let's do the math.*
 
 **Caption**:
