@@ -5,3 +5,4 @@ posted_history.json
 img_cache/
 .env
 __pycache__/
+.browser_profile/
