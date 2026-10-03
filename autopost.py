@@ -11,7 +11,7 @@ import json
 import time
 import getpass
 from pathlib import Path
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageDraw, ImageFont
 
 try:
     from instagrapi import Client
@@ -74,15 +74,13 @@ def parse_posts():
         img1_rel = img_match.group(1).strip() if img_match else ""
         img2_rel = img_match.group(2).strip() if (img_match and img_match.group(2)) else ""
 
-        # Normalize relative image path (e.g. if checklist is just "checklist.jpg")
+        # Normalize relative image path
         if img1_rel and not (BASE_DIR / img1_rel).exists():
-            # Try finding in img/
             if (BASE_DIR / "img" / Path(img1_rel).name).exists():
                 img1_rel = f"img/{Path(img1_rel).name}"
 
         if img2_rel:
             if not (BASE_DIR / img2_rel).exists():
-                # Derive checklist filename from hero if only 'checklist.jpg'
                 if img2_rel == "checklist.jpg" and img1_rel:
                     candidate = img1_rel.replace("-hero.jpg", "-checklist.jpg")
                     if (BASE_DIR / candidate).exists():
@@ -92,14 +90,28 @@ def parse_posts():
                 else:
                     img2_rel = f"img/{Path(img2_rel).name}"
 
+        # Extract Hook Line (Image Overlay copy)
+        hook_match = re.search(r"\*\s+\*\*Hook Line \(Image Overlay\)\*\*:\s*\*(.*?)\*", block)
+        hook = hook_match.group(1).strip() if hook_match else ""
+
         # Extract Caption
         cap_match = re.search(r"\*\*Caption\*\*:\s*\n(.*?)(?=\n---\s*|\Z)", block, re.DOTALL)
         caption = cap_match.group(1).strip() if cap_match else ""
+
+        # Safety clean caption (strip raw domain names and explicit http URLs)
+        # Instagram's spam filter silently strips captions containing raw web domains on mobile API uploads
+        caption = re.sub(r"https?://\S+", "", caption)
+        caption = re.sub(r"at homepickshq\.com\b", "", caption, flags=re.IGNORECASE)
+        caption = re.sub(r": homepickshq\.com\b", "", caption, flags=re.IGNORECASE)
+        caption = re.sub(r"homepickshq\.com", "the link in bio", caption, flags=re.IGNORECASE)
+        caption = re.sub(r"[ \t]+", " ", caption)
+        caption = re.sub(r"\n{3,}", "\n\n", caption).strip()
 
         posts.append(
             {
                 "id": post_id,
                 "title": title,
+                "hook": hook,
                 "img1": img1_rel,
                 "img2": img2_rel,
                 "caption": caption,
@@ -109,15 +121,105 @@ def parse_posts():
     return posts
 
 
-def prepare_carousel_slide(src_path: Path, output_path: Path, target_size=(1080, 1350)):
+def prepare_hero_slide(src_path: Path, output_path: Path, hook_text: str = "", badge_text: str = "BUYING GUIDE", target_size=(1080, 1350)):
     """
-    Fits any aspect ratio image into Instagram's 4:5 portrait frame (1080x1350)
-    with a tasteful blurred background of the image itself.
-    Ensures zero cropping of text and uniform aspect ratio for albums.
+    Renders Slide 1 (Cover / Hero) with:
+    1. 4:5 portrait frame (1080x1350)
+    2. Tasteful blurred ambient background with 25% darkening
+    3. Center-framed full hero photograph (uncropped)
+    4. Top Category Badge (e.g. 'BUYING GUIDE')
+    5. Top Hook card with the exact hook line text overlay, word-wrapped cleanly
+    6. Bottom CTA pill: 'SWIPE FOR 60-SEC CHECKLIST  >'
+    7. Clean 'homepickshq.com' brand watermark
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    if output_path.exists():
-        return output_path
+
+    with Image.open(src_path) as im:
+        im = im.convert("RGB")
+        tw, th = target_size
+
+        # Background: cover and blur
+        scale_bg = max(tw / im.width, th / im.height)
+        bg_w = int(im.width * scale_bg)
+        bg_h = int(im.height * scale_bg)
+        bg = im.resize((bg_w, bg_h), Image.Resampling.LANCZOS)
+        left = (bg_w - tw) // 2
+        top = (bg_h - th) // 2
+        canvas = bg.crop((left, top, left + tw, top + th)).filter(ImageFilter.GaussianBlur(40))
+
+        # Dim ambient background for high contrast
+        dim = Image.new("RGB", (tw, th), (0, 0, 0))
+        canvas = Image.blend(canvas, dim, 0.25)
+
+        # Foreground hero photo centered
+        scale_fg = tw / im.width
+        fg_w = tw
+        fg_h = int(im.height * scale_fg)
+        fg = im.resize((fg_w, fg_h), Image.Resampling.LANCZOS)
+        offset_y = (th - fg_h) // 2
+        canvas.paste(fg, (0, offset_y))
+
+        draw = ImageDraw.Draw(canvas)
+
+        # Fonts
+        try:
+            font_badge = ImageFont.truetype("segoeuib.ttf", 24)
+            font_hook = ImageFont.truetype("segoeuib.ttf", 46)
+            font_sub = ImageFont.truetype("segoeuib.ttf", 30)
+            font_brand = ImageFont.truetype("segoeuib.ttf", 32)
+        except Exception:
+            try:
+                font_badge = ImageFont.truetype("arialbd.ttf", 24)
+                font_hook = ImageFont.truetype("arialbd.ttf", 46)
+                font_sub = ImageFont.truetype("arialbd.ttf", 30)
+                font_brand = ImageFont.truetype("arialbd.ttf", 32)
+            except Exception:
+                font_badge = font_hook = font_sub = font_brand = ImageFont.load_default()
+
+        # Badge pill at top left
+        draw.rounded_rectangle([60, 55, 60 + 210, 55 + 46], radius=8, fill=(194, 65, 12))
+        draw.text((76, 63), badge_text, fill=(255, 255, 255), font=font_badge)
+
+        # Hook card
+        if hook_text:
+            words = hook_text.split()
+            lines = []
+            curr = ""
+            for w in words:
+                test_line = (curr + " " + w).strip()
+                bbox = draw.textbbox((0, 0), test_line, font=font_hook)
+                if bbox[2] - bbox[0] < 920:
+                    curr = test_line
+                else:
+                    lines.append(curr)
+                    curr = w
+            if curr:
+                lines.append(curr)
+
+            hook_card_y = 120
+            line_spacing = 58
+            card_h = len(lines) * line_spacing + 36
+            draw.rounded_rectangle([50, hook_card_y, 1030, hook_card_y + card_h], radius=18, fill=(255, 255, 255))
+            for i, l in enumerate(lines):
+                draw.text((80, hook_card_y + 18 + i * line_spacing), l, fill=(18, 26, 40), font=font_hook)
+
+        # Bottom Call to Action and Branding
+        cta_y = offset_y + fg_h + 45
+        draw.rounded_rectangle([50, cta_y, 1030, cta_y + 75], radius=16, fill=(255, 255, 255))
+        draw.text((80, cta_y + 18), "SWIPE FOR 60-SEC CHECKLIST  >", fill=(18, 26, 40), font=font_sub)
+        draw.text((80, cta_y + 115), "homepickshq.com", fill=(255, 255, 255), font=font_brand)
+
+        canvas.save(output_path, "JPEG", quality=95)
+
+    return output_path
+
+
+def prepare_checklist_slide(src_path: Path, output_path: Path, target_size=(1080, 1350)):
+    """
+    Fits vertical checklist (1000x1500) into Instagram's 4:5 portrait frame (1080x1350)
+    with a blurred background of the checklist itself.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with Image.open(src_path) as im:
         im = im.convert("RGB")
@@ -199,26 +301,32 @@ def get_instagram_client():
     return cl
 
 
-def publish_post(cl: Client, post: dict):
+def publish_post(cl: Client, post: dict, force_rebuild: bool = True):
     """Formats images and uploads as a 2-slide carousel or single photo."""
     print(f"\n📤 Processing Post #{post['id']}: {post['title']}")
 
     slides = []
-    # Slide 1 (Hero)
+    # Slide 1 (Hero with Hook Overlay)
     if post["img1"]:
         src1 = BASE_DIR / post["img1"]
         if src1.exists():
             out1 = CACHE_DIR / f"post_{post['id']}_slide1.jpg"
-            slides.append(prepare_carousel_slide(src1, out1))
+            if force_rebuild and out1.exists():
+                out1.unlink()
+            print(f"🎨 Rendering Slide 1 (Hero + Hook Overlay: '{post.get('hook', '')[:40]}...')...")
+            slides.append(prepare_hero_slide(src1, out1, hook_text=post.get("hook", "")))
         else:
             print(f"⚠️ Slide 1 not found at {src1}")
 
-    # Slide 2 (Checklist)
+    # Slide 2 (Checklist Infographic)
     if post["img2"]:
         src2 = BASE_DIR / post["img2"]
         if src2.exists():
             out2 = CACHE_DIR / f"post_{post['id']}_slide2.jpg"
-            slides.append(prepare_carousel_slide(src2, out2))
+            if force_rebuild and out2.exists():
+                out2.unlink()
+            print("🎨 Rendering Slide 2 (Checklist Infographic)...")
+            slides.append(prepare_checklist_slide(src2, out2))
         else:
             print(f"ℹ️ Slide 2 not found at {src2} (posting as single image)")
 
@@ -235,6 +343,15 @@ def publish_post(cl: Client, post: dict):
         else:
             print(f"📸 Uploading single photo ({slides[0].name})...")
             media = cl.photo_upload(slides[0], caption=caption)
+
+        # Verification: check if Instagram retained the caption
+        if not getattr(media, "caption_text", ""):
+            print("⚠️ Instagram did not immediately attach caption during album configure. Attempting fallback...")
+            try:
+                cl.media_edit(str(media.pk), caption)
+                print("✅ Caption attached successfully via fallback edit!")
+            except Exception as fe:
+                print(f"ℹ️ Fallback note: {fe}")
 
         print(f"🎉 SUCCESS! Published Post #{post['id']} (Media ID: {media.pk})")
         return media.pk
@@ -270,9 +387,10 @@ def main():
     print(" [3] Auto-publish ALL remaining guides with a scheduled interval")
     print(" [4] Preview list and publication status")
     print(" [5] Clear saved Instagram session")
+    print(" [6] Reset publishing history (re-post previous guides)")
     print(" [0] Exit")
 
-    choice = input("\nEnter choice [0-5]: ").strip()
+    choice = input("\nEnter choice [0-6]: ").strip()
 
     if choice == "0":
         print("Goodbye!")
@@ -291,6 +409,14 @@ def main():
             print("🗑️ Cleared session.json. Next run will require login.")
         else:
             print("No saved session found.")
+        return
+
+    if choice == "6":
+        if HISTORY_FILE.exists():
+            HISTORY_FILE.unlink()
+            print("🗑️ Reset posted_history.json. All 26 guides marked pending!")
+        else:
+            print("History is already empty.")
         return
 
     # Requires Instagram Login
