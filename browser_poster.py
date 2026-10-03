@@ -240,138 +240,139 @@ def main():
         print("No posts found in instagram-posts.md.")
         return
 
-    history = load_history()
-    published_ids = set(int(k) for k in history.keys())
+    while True:
+        history = load_history()
+        published_ids = set(int(k) for k in history.keys())
 
-    print(f"📚 Loaded {len(posts)} total buying guides.")
-    print(f"✅ Previously published: {len(published_ids)} / {len(posts)}")
-    print(f"⏳ Remaining to publish: {len(posts) - len(published_ids)}")
-    print("-" * 60)
+        print(f"\n📚 Loaded {len(posts)} total buying guides.")
+        print(f"✅ Previously published: {len(published_ids)} / {len(posts)}")
+        print(f"⏳ Remaining to publish: {len(posts) - len(published_ids)}")
+        print("-" * 60)
 
-    print("\nSelect an action:")
-    print(" [1] Post a SINGLE guide (Test run — choose by number 1-26)")
-    print(" [2] Post NEXT unpublished guide")
-    print(" [3] Auto-publish ALL remaining guides with a scheduled interval")
-    print(" [4] Preview list and publication status")
-    print(" [5] Log in / Check Instagram Session in Edge browser")
-    print(" [6] Reset publishing history")
-    print(" [0] Exit")
+        print("\nSelect an action:")
+        print(" [1] Post a SINGLE guide (Test run — choose by number 1-26)")
+        print(" [2] Post NEXT unpublished guide")
+        print(" [3] Auto-publish ALL remaining guides with a scheduled interval")
+        print(" [4] Preview list and publication status")
+        print(" [5] Verify Instagram Session in Edge browser")
+        print(" [6] Reset publishing history")
+        print(" [0] Exit")
 
-    choice = input("\nEnter choice [0-6]: ").strip()
+        choice = input("\nEnter choice [0-6]: ").strip()
 
-    if choice == "0":
-        print("Goodbye!")
-        return
+        if choice == "0":
+            print("Goodbye!")
+            break
 
-    if choice == "4":
-        print("\n--- All 26 Guides Status ---")
-        for p in posts:
-            status = "✅ PUBLISHED" if p["id"] in published_ids else "⏳ PENDING"
-            print(f" #{p['id']:02d}: {p['title']} [{status}]")
-        return
+        if choice == "4":
+            print("\n--- All 26 Guides Status ---")
+            for p in posts:
+                status = "✅ PUBLISHED" if p["id"] in published_ids else "⏳ PENDING"
+                print(f" #{p['id']:02d}: {p['title']} [{status}]")
+            continue
 
-    if choice == "6":
-        if HISTORY_FILE.exists():
-            HISTORY_FILE.unlink()
-            print("🗑️ Reset posted_history.json. All 26 guides marked pending!")
-        else:
-            print("History is already empty.")
-        return
+        if choice == "6":
+            if HISTORY_FILE.exists():
+                HISTORY_FILE.unlink()
+                print("🗑️ Reset posted_history.json. All 26 guides marked pending!")
+            else:
+                print("History is already empty.")
+            continue
 
-    # Start Playwright Browser
-    with sync_playwright() as p:
-        print("\n🚀 Launching Microsoft Edge...")
-        context = get_browser_context(p, headless=False)
-        page = context.pages[0] if context.pages else context.new_page()
+        # Start Playwright Browser for posting or verifying session
+        with sync_playwright() as p:
+            print("\n🚀 Launching Microsoft Edge...")
+            context = get_browser_context(p, headless=False)
+            page = context.pages[0] if context.pages else context.new_page()
 
-        # Ensure login
-        logged_in = ensure_logged_in(page)
-        if not logged_in:
-            print("❌ Login was not completed.")
-            context.close()
-            return
+            # Ensure login
+            logged_in = ensure_logged_in(page)
+            if not logged_in:
+                print("❌ Login was not completed.")
+                context.close()
+                continue
 
-        if choice == "5":
-            print("✅ Browser session verified! You can close the browser window or press Enter to return.")
-            input("Press Enter to close browser...")
-            context.close()
-            return
+            if choice == "5":
+                print("✅ Browser session verified! You can close the browser window or press Enter to return.")
+                input("Press Enter to continue...")
+                context.close()
+                continue
 
-        if choice == "1":
-            num_str = input(f"\nEnter guide number to publish (1-{len(posts)}): ").strip()
-            try:
-                target_id = int(num_str)
-                target_post = next((po for po in posts if po["id"] == target_id), None)
-                if not target_post:
-                    print(f"❌ Post #{target_id} not found.")
+            if choice == "1":
+                num_str = input(f"\nEnter guide number to publish (1-{len(posts)}): ").strip()
+                try:
+                    target_id = int(num_str)
+                    target_post = next((po for po in posts if po["id"] == target_id), None)
+                    if not target_post:
+                        print(f"❌ Post #{target_id} not found.")
+                        context.close()
+                        continue
+
+                    ok = publish_post_browser(page, target_post)
+                    if ok:
+                        history[str(target_id)] = {
+                            "title": target_post["title"],
+                            "published_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "method": "browser_playwright",
+                        }
+                        save_history(history)
+                except ValueError:
+                    print("Invalid number.")
+
+            elif choice == "2":
+                next_post = next((po for po in posts if po["id"] not in published_ids), None)
+                if not next_post:
+                    print("🎉 All 26 posts have already been published!")
                     context.close()
-                    return
+                    continue
 
-                ok = publish_post_browser(page, target_post)
+                ok = publish_post_browser(page, next_post)
                 if ok:
-                    history[str(target_id)] = {
-                        "title": target_post["title"],
-                        "published_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "method": "browser_playwright",
-                    }
-                    save_history(history)
-            except ValueError:
-                print("Invalid number.")
-
-        elif choice == "2":
-            next_post = next((po for po in posts if po["id"] not in published_ids), None)
-            if not next_post:
-                print("🎉 All 26 posts have already been published!")
-                context.close()
-                return
-
-            ok = publish_post_browser(page, next_post)
-            if ok:
-                history[str(next_post["id"])] = {
-                    "title": next_post["title"],
-                    "published_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "method": "browser_playwright",
-                }
-                save_history(history)
-
-        elif choice == "3":
-            pending_posts = [po for po in posts if po["id"] not in published_ids]
-            if not pending_posts:
-                print("🎉 All 26 posts have already been published!")
-                context.close()
-                return
-
-            print(f"\nFound {len(pending_posts)} pending posts.")
-            hours_str = input("Enter delay between posts in HOURS (e.g., 3 or 4, default 4): ").strip()
-            try:
-                delay_hours = float(hours_str) if hours_str else 4.0
-            except ValueError:
-                delay_hours = 4.0
-
-            delay_seconds = int(delay_hours * 3600)
-            print(f"⏰ Scheduler active: Posting 1 guide every {delay_hours} hours.")
-            print("Leave this window open. Press Ctrl+C at any time to stop safely.\n")
-
-            for idx, po in enumerate(pending_posts):
-                ok = publish_post_browser(page, po)
-                if ok:
-                    history[str(po["id"])] = {
-                        "title": po["title"],
+                    history[str(next_post["id"])] = {
+                        "title": next_post["title"],
                         "published_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "method": "browser_playwright",
                     }
                     save_history(history)
 
-                # Wait between posts
-                if idx < len(pending_posts) - 1:
-                    next_time = time.strftime("%H:%M:%S", time.localtime(time.time() + delay_seconds))
-                    print(f"⏳ Waiting {delay_hours} hours. Next post at {next_time}...")
-                    time.sleep(delay_seconds)
+            elif choice == "3":
+                pending_posts = [po for po in posts if po["id"] not in published_ids]
+                if not pending_posts:
+                    print("🎉 All 26 posts have already been published!")
+                    context.close()
+                    continue
 
-            print("\n🎉 Completed all scheduled posts!")
+                print(f"\nFound {len(pending_posts)} pending posts.")
+                hours_str = input("Enter delay between posts in HOURS (e.g., 3 or 4, default 4): ").strip()
+                try:
+                    delay_hours = float(hours_str) if hours_str else 4.0
+                except ValueError:
+                    delay_hours = 4.0
 
-        print("\nClosing browser...")
-        context.close()
+                delay_seconds = int(delay_hours * 3600)
+                print(f"⏰ Scheduler active: Posting 1 guide every {delay_hours} hours.")
+                print("Leave this window open. Press Ctrl+C at any time to stop safely.\n")
+
+                for idx, po in enumerate(pending_posts):
+                    ok = publish_post_browser(page, po)
+                    if ok:
+                        history[str(po["id"])] = {
+                            "title": po["title"],
+                            "published_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "method": "browser_playwright",
+                        }
+                        save_history(history)
+
+                    # Wait between posts
+                    if idx < len(pending_posts) - 1:
+                        next_time = time.strftime("%H:%M:%S", time.localtime(time.time() + delay_seconds))
+                        print(f"⏳ Waiting {delay_hours} hours. Next post at {next_time}...")
+                        time.sleep(delay_seconds)
+
+                print("\n🎉 Completed all scheduled posts!")
+
+            print("\nClosing browser...")
+            context.close()
 
 
 if __name__ == "__main__":
