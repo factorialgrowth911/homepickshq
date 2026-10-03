@@ -10,6 +10,12 @@ import sys
 import re
 import json
 import time
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 from pathlib import Path
 import pyperclip
 from playwright.sync_api import sync_playwright
@@ -128,24 +134,31 @@ def publish_post_browser(page, post, force_rebuild=True):
     except Exception:
         pass
 
-    # 4. Click 'Create' button on sidebar
-    print("🖱️ Clicking 'Create'...")
-    create_btn = page.locator("svg[aria-label='New post'], span:has-text('Create'), a:has-text('Create')").first
-    create_btn.click()
-    time.sleep(1.5)
+    # 4. Open Create Post modal
+    print("🖱️ Opening Create Post dialog...")
+    file_input = page.locator("input[type='file']").first
+    for attempt in range(3):
+        create_btn = page.locator("svg[aria-label='New post'], span:has-text('Create'), a:has-text('Create')").first
+        create_btn.click()
+        time.sleep(1.5)
 
-    # If submenu appeared ("Post" / "AI"), click "Post"
-    try:
-        post_sub = page.locator("span:has-text('Post'), a:has-text('Post')").first
-        if post_sub.is_visible(timeout=1500):
-            post_sub.click()
-            time.sleep(1.5)
-    except Exception:
-        pass
+        for p_elem in page.locator("text='Post'").all():
+            try:
+                if p_elem.is_visible():
+                    p_elem.click()
+                    time.sleep(1.5)
+                    break
+            except Exception:
+                pass
+
+        try:
+            file_input.wait_for(state="attached", timeout=4000)
+            break
+        except Exception:
+            time.sleep(1)
 
     # 5. Attach files
     print(f"📁 Attaching {len(slides)} slide(s)...")
-    file_input = page.locator("input[type='file']").first
     file_input.wait_for(state="attached", timeout=5000)
     # Enable multiple file selection on the DOM input element
     file_input.evaluate("el => el.setAttribute('multiple', '')")
@@ -154,13 +167,13 @@ def publish_post_browser(page, post, force_rebuild=True):
 
     # 6. Adjust aspect ratio to 4:5 Portrait
     print("📐 Adjusting aspect ratio to 4:5 Portrait...")
+    dialog = page.locator("div[role='dialog']").first
     try:
-        crop_btn = page.locator("svg[aria-label='Select crop']").locator("..").first
+        crop_btn = dialog.locator("svg[aria-label='Select crop']").locator("..").first
         if crop_btn.is_visible(timeout=3000):
             crop_btn.click()
             time.sleep(1)
             # Find 4:5 option inside the crop popup
-            dialog = page.locator("div[role='dialog']").first
             ratio_opt = dialog.locator("button:has-text('4:5'), div[role='button']:has-text('4:5'), span:has-text('4:5')").first
             if ratio_opt.is_visible(timeout=2000):
                 ratio_opt.click()
@@ -171,57 +184,69 @@ def publish_post_browser(page, post, force_rebuild=True):
 
     # 7. Click 'Next' (to Filters screen)
     print("➡️ Clicking Next (filters)...")
-    next_btn = page.locator("div[role='button']:has-text('Next'), button:has-text('Next')").first
+    next_btn = dialog.locator("div[role='button']:has-text('Next'), button:has-text('Next')").first
     next_btn.click()
     time.sleep(2)
 
     # 8. Click 'Next' (to Caption screen)
     print("➡️ Clicking Next (caption)...")
-    next_btn = page.locator("div[role='button']:has-text('Next'), button:has-text('Next')").first
+    next_btn = dialog.locator("div[role='button']:has-text('Next'), button:has-text('Next')").first
     next_btn.click()
     time.sleep(2)
 
     # 9. Type / Insert Caption
     print("✍️ Inserting caption...")
     caption = post["caption"]
-    caption_box = page.locator("div[aria-label='Add a caption...'], div[aria-label='Write a caption...'], div[role='textbox']").first
+    caption_box = dialog.locator("div[aria-label='Add a caption...'], div[aria-label='Write a caption...'], div[role='textbox']").first
     caption_box.click()
     time.sleep(0.5)
 
     page.keyboard.insert_text(caption)
     time.sleep(2)
 
-    # Press Escape to close any hashtag/mention suggestion popups
-    page.keyboard.press("Escape")
-    time.sleep(1)
-
     # 10. Click 'Share'
     print("🚀 Clicking Share...")
-    share_btn = page.locator("div[role='button']:has-text('Share'), button:has-text('Share')").first
-    share_btn.click()
+    share_btn = dialog.locator("div[role='button']:has-text('Share'), button:has-text('Share')").first
+    try:
+        share_btn.click()
+    except Exception:
+        share_btn.click(force=True)
+    time.sleep(3)
 
     # 11. Wait for confirmation ("Your post has been shared.")
     print("⏳ Waiting for publication confirmation...")
     success = False
-    for _ in range(35):
+    for i in range(40):
         time.sleep(2)
         try:
             if page.locator("text='Your post has been shared.'").is_visible(timeout=1000):
                 success = True
+                print("   ✅ Instagram confirmed: 'Your post has been shared.'")
                 break
             if page.locator("svg[aria-label='Animated checkmark']").is_visible(timeout=1000):
                 success = True
+                print("   ✅ Instagram confirmed: Animated checkmark visible")
                 break
-            if not page.locator("div[role='dialog']:has-text('Create new post')").is_visible(timeout=1000):
-                success = True
-                break
+            dialog = page.locator("div[role='dialog']").first
+            if dialog.is_visible(timeout=500):
+                dialog_text = dialog.inner_text().lower()
+                if "has been shared" in dialog_text or "post shared" in dialog_text:
+                    success = True
+                    print("   ✅ Found confirmation in dialog text")
+                    break
         except Exception:
             pass
+
+    # Save a screenshot of the result screen
+    try:
+        page.screenshot(path=str(CACHE_DIR / f"post_{post['id']}_result.png"))
+    except Exception:
+        pass
 
     # Close any lingering dialogs
     try:
         close_btn = page.locator("svg[aria-label='Close']").first
-        if close_btn.is_visible(timeout=1000):
+        if close_btn.is_visible(timeout=1500):
             close_btn.click()
     except Exception:
         pass
@@ -230,7 +255,7 @@ def publish_post_browser(page, post, force_rebuild=True):
         print(f"🎉 SUCCESS! Published Post #{post['id']} with full caption and 4:5 carousels!")
         return True
     else:
-        print("⚠️ Share clicked, but confirmation dialog timed out. Post is likely live on your profile.")
+        print("⚠️ Share clicked, waiting timed out. Check img_cache result screenshot.")
         return True
 
 
