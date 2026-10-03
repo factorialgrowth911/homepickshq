@@ -764,3 +764,120 @@ footer a:hover {
     display: none;
   }
 }
+
+/* Lead Capture / Email Newsletter Box */
+.lead-box {
+  background: linear-gradient(135deg, rgba(194, 65, 12, 0.05), rgba(194, 65, 12, 0.12));
+  border: 2px solid var(--acc);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  margin: 2.5rem 0;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lead-box {
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.08), rgba(251, 146, 60, 0.18));
+    border-color: var(--acc);
+  }
+}
+
+.lead-box .lead-badge {
+  display: inline-block;
+  background: var(--acc);
+  color: var(--onacc);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  margin-bottom: 12px;
+}
+
+.lead-box h3 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  line-height: 1.25;
+  color: var(--fg);
+}
+
+.lead-box p {
+  color: var(--mut);
+  margin: 0 0 16px;
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.lead-box .lead-form {
+  margin-top: 12px;
+}
+
+.lead-box .lead-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.lead-box .lead-email {
+  flex: 1 1 240px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  border: 1px solid var(--bd);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--fg);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lead-box .lead-email:focus {
+  border-color: var(--acc);
+  box-shadow: 0 0 0 3px var(--tag-bg);
+}
+
+.lead-box .lead-btn {
+  margin: 0;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+}
+
+.lead-box .lead-micro {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--mut);
+  margin-top: 6px;
+}
+
+.lead-box .lead-success {
+  background: rgba(21, 128, 61, 0.1);
+  border: 1px solid var(--pro-color);
+  color: var(--pro-color);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  margin-top: 12px;
+  line-height: 1.4;
+}
+
+.lead-box .lead-success a {
+  color: var(--pro-color);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .lead-box {
+    padding: 20px 16px;
+    margin: 2rem 0;
+  }
+  .lead-box .lead-btn {
+    width: 100%;
+  }
+}
