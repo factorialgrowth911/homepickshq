@@ -543,3 +543,32 @@ Swipe for our 60-second buyer checklist before you decide! 👉
 
 🔗 Check today's price and deals via the link in bio
 #GooglePixel #Pixel9ProFold #FoldablePhone #SmartHome #TechGadgets #ProductivityHacks #MobileOffice #HomePicksHQ
+
+---
+
+## 28. BTHFST Bunk Bed with Stairs: Dresser Replacement or Assembly Nightmare?
+* **Images**: `img/bthfst-bunk-bed-with-stairs-storage-hero.jpg` + `img/bthfst-bunk-bed-with-stairs-storage-checklist.jpg`
+* **Hook Line (Image Overlay)**: *Can a bunk bed with staircase drawers completely replace a bedroom dresser?*
+
+**Caption**:
+Trying to fit two kids, two beds, and a massive dresser into a 10x10 bedroom? 🛏️📦
+
+The BTHFST Bunk Bed swaps narrow, slippery ladder rungs for wide walk-up steps—and packs built-in storage drawers into every single stair rise plus rolling under-bed bins.
+
+Here is what you need to know before you order:
+
+🪜 REAL-WORLD STORAGE:
+• 3 deep staircase drawers hold everyday clothes, socks, and pajamas.
+• 2 rolling under-bed drawers on casters swallow extra blankets, winter coats, or toy bins.
+• Built-in charging station (AC + USB/Type-C) keeps messy wires off the floor.
+
+⚠️ CRITICAL FIT CHECKS:
+• Needs at least 8-foot ceilings: keep 30"+ between upper mattress and ceiling.
+• Staircase adds 16-20” of length compared to straight ladder bunks.
+• Upper mattress MUST be 6–8” max so safety guardrails stay at least 5” above the mattress surface.
+
+Swipe left for our 60-second room measurement checklist before ordering! 👉
+
+🔗 Check current prices and layout specs via the link in bio
+#BunkBed #KidsRoomDecor #SharedBedroom #HomeOrganization #SmallSpaceLiving #RoomMakeover #BedroomStorage #HomePicksHQ
+
