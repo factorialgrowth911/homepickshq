@@ -572,3 +572,30 @@ Swipe left for our 60-second room measurement checklist before ordering! 👉
 🔗 Check current prices and layout specs via the link in bio
 #BunkBed #KidsRoomDecor #SharedBedroom #HomeOrganization #SmallSpaceLiving #RoomMakeover #BedroomStorage #HomePicksHQ
 
+---
+
+## 29. JJJ Oversized Modular Cloud Sectional: Is a $2,000 Couch Worth It?
+* **Images**: `img/jjj-oversized-modular-sectional-sofa-hero.jpg` + `img/jjj-oversized-modular-sectional-sofa-checklist.jpg`
+* **Hook Line (Image Overlay)**: *A down-filled modular cloud couch with built-in wooden end tables and washable covers.*
+
+**Caption**:
+Dreaming of a luxury cloud couch, but terrified of pet messes, spilled drinks, and $8,000 designer price tags? ☁️🛋️
+
+The JJJ Oversized Modular Sectional brings hotel-lobby comfort down to earth with smart living room features:
+
+✨ WHY IT'S SPECIAL:
+• Cloud Down Cushioning: Real down feather wrap over high-density resilient foam for an authentic sink-in lounge feel.
+• Built-In Solid Wood Trays: Sturdy end tables integrated right into the armrests for morning coffee or laptops.
+• Hidden Armrest Storage: Deep flip-top compartments hold remotes, gaming gear, and cozy throws.
+• 100% Machine-Washable Covers: Every single cushion cover unzips for cold gentle-cycle washing—spills and pet hair are no big deal!
+• Tool-Free 30-Min Setup: Modules snap into place using heavy-duty card-slot locking clips.
+
+⚠️ BEFORE YOU BUY:
+At 34.6” seat depth, this is an ultra-deep lounge couch made for kicking back, movie marathons, and weekend naps. Make sure you allow 30–36” of perimeter walking clearance!
+
+Swipe left for our 60-second living room buyer checklist! 👉
+
+🔗 Check current pricing and modular layout options via the link in bio
+#CloudCouch #ModularSectional #LivingRoomGoals #CozyHome #InteriorDesign #SectionalSofa #HomeDecor #HomePicksHQ
+
+
